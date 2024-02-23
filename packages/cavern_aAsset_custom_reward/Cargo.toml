@@ -1,0 +1,47 @@
+[package]
+name = "anchor_basset_custom_reward"
+version = "1.0.0"
+authors = ["MSNTCS <mohammad@terra.money>"]
+edition = "2018"
+
+exclude = [
+  # Those files are rust-optimizer artifacts. You might want to commit them for convenience but they should not be part of the source code publication.
+  "contract.wasm",
+  "hash.txt",
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+
+[dependencies]
+cw20 = { workspace=true }
+cosmwasm-std = { version = "1.1.0", features = ["iterator"] }
+cw-storage-plus = { workspace=true, features = ["iterator"]}
+cosmwasm-schema = { version = "1.1.0", default-features = false }
+
+basset = { path = "../../packages/basset", default-features = false, version = "1.1.0"}
+
+schemars = { workspace = true }
+serde = { workspace = true, default-features = false, features = ["derive"] }
+thiserror = { version = "1.0.21" }
+strum = "0.24.1"
+
+[dev-dependencies]
+cosmwasm-storage = { workspace=true, features = ["iterator"] }

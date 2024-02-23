@@ -1,0 +1,43 @@
+[package]
+name = "spectrum-wrapper-token"
+version = "1.0.0"
+authors = ["MSNTCS <mohammad@terra.money>"]
+edition = "2018"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+backtraces = ["cosmwasm-std/backtraces"]
+# use library feature to disable all init/handle/query exports
+library = []
+
+[dependencies]
+cw2 = { workspace=true }
+cw20 = { workspace=true }
+cw20-base = { features = ["library"], workspace=true }
+cosmwasm-std = { workspace=true, features = ["staking"] }
+cosmwasm-schema = { workspace=true, default-features = false  }
+cw-storage-plus = { workspace=true, features = ["iterator"]}
+schemars = { workspace = true }
+serde = { workspace = true, default-features = false, features = ["derive"] }
+basset = { path = "../../packages/basset", default-features = false, version = "1.1.0"}
+cavern-lsd-wrapper-token-with-limit = { path = "../../packages/cavern_lsd_wrapper_token_with_limit", default-features = false, version = "1.0.0"}
+
+[dev-dependencies]
+cosmwasm-storage = { workspace=true, features = ["iterator"] }
+wrapper-implementations = { path = "../../packages/wrapper_implementations", default-features = false, version = "1.0.0"}
+
+# we only need to enable this if we use integration tests
+#cosmwasm-vm = { version = "0.15.0", default-features = false }

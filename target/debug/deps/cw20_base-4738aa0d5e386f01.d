@@ -1,0 +1,13 @@
+/Users/andrewkerslake/Desktop/Ginkou v2 Smart contracts/cavern-lsd-wrapper-updated/target/debug/deps/libcw20_base-4738aa0d5e386f01.rmeta: /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/lib.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/allowances.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/contract.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/enumerable.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/error.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/msg.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/state.rs
+
+/Users/andrewkerslake/Desktop/Ginkou v2 Smart contracts/cavern-lsd-wrapper-updated/target/debug/deps/cw20_base-4738aa0d5e386f01.d: /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/lib.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/allowances.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/contract.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/enumerable.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/error.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/msg.rs /Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/state.rs
+
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/lib.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/allowances.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/contract.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/enumerable.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/error.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/msg.rs:
+/Users/andrewkerslake/.cargo/git/checkouts/cw-plus-43037d776c61e804/4634101/contracts/cw20-base/src/state.rs:
+
+# env-dep:CARGO_PKG_VERSION=1.1.1

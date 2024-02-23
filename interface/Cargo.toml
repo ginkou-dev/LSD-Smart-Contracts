@@ -1,0 +1,19 @@
+[package]
+name = "interface"
+version = "0.1.0"
+edition = "2021"
+
+
+[lib]
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+basset = { version = "1.1.0", path = "../packages/basset", features=["interface"]  }
+cavern-lsd-hub = { version = "1.0.0", path = "../contracts/cavern-lsd-hub" }
+cavern-lsd-hub-simple = { version = "1.0.0", path = "../contracts/cavern-lsd-hub-simple" }
+cavern-lsd-reward = { version = "1.0.0", path = "../contracts/cavern-lsd-reward" }
+cosmwasm-std = "1.4.1"
+cw-orch = { workspace=true }
+cw20-base = { workspace=true, features=["interface"]  }
+cavern-lsd-wrapper = { version = "1.0.0", path = "../contracts/cavern-lsd-wrapper" }
+wrapper-implementations = { version = "1.0.0", path = "../packages/wrapper_implementations" }

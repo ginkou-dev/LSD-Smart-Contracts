@@ -1,0 +1,39 @@
+[package]
+name = "basset"
+version = "1.1.0"
+authors = ["MSNTCS <najafi@codechain.io>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[profile.release]
+opt-level = 3
+debug = false
+rpath = false
+lto = true
+debug-assertions = false
+codegen-units = 1
+panic = 'abort'
+incremental = false
+overflow-checks = true
+
+[features]
+# for quicker tests, cargo test --lib
+# for more explicit tests, cargo test --features=backtraces
+backtraces = ["cosmwasm-std/backtraces"]
+interface=["dep:cw-orch"]
+
+[dependencies]
+cw20 = { workspace=true }
+cosmwasm-std = { version = "1.1.0" }
+cosmwasm-schema = { version = "1.1.0" }
+
+schemars = { workspace = true }
+thiserror = { version = "1.0.20" }
+serde = { workspace = true, default-features = false, features = ["derive"] }
+strum = "0.24.1"
+strum_macros = "0.24.1"
+astroport = "2.3.1"
+cw-orch = { workspace = true, optional = true }
+
+[dev-dependencies]

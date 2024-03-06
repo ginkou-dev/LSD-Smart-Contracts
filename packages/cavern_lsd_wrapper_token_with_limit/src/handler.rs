@@ -1,4 +1,3 @@
-
 use crate::querier::get_lsd_wrapper_exchange_rate;
 use crate::state::read_lsd_config;
 use crate::trait_def::LSDHub;
@@ -42,7 +41,7 @@ fn _before_burn<
 ) -> Result<Vec<CosmosMsg>, ContractError> {
     let lsd_config: T = read_lsd_config(deps.storage)?;
     // When burning some tokens from here, we transfer an equivalent amount of 1 Luna per each burned token to the burner
-    let lsd_exchange_rate = get_lsd_wrapper_exchange_rate::<I,T>(deps, env.clone())?;
+    let lsd_exchange_rate = get_lsd_wrapper_exchange_rate::<I, T>(deps, env.clone(), vec![])?;
     let lsd_amount = Decimal::from_ratio(amount, 1u128) / lsd_exchange_rate;
 
     let msgs = lsd_config.send_funds(deps, env, lsd_amount * Uint128::one(), info.sender)?;
@@ -94,7 +93,8 @@ pub fn execute_mint<
     // In order to mint, we need to transfer the underlying lsd asset to the contract
     // Any sender can call this function as long as they have the sufficient lsd balance
     let lsd_config: T = read_lsd_config(deps.storage)?;
-    let exchange_rate = get_lsd_wrapper_exchange_rate::<I,T>(deps.as_ref(), env.clone())?;
+    let exchange_rate =
+        get_lsd_wrapper_exchange_rate::<I, T>(deps.as_ref(), env.clone(), info.funds.clone())?;
     // We add 1 to the send_lsd_amount here to make sure we are not undercollateralizing our token at the start
     let send_lsd_amount = Decimal::from_ratio(amount, 1u128) / exchange_rate + Decimal::one();
 
@@ -125,7 +125,8 @@ pub fn execute_mint_with<
     // In order to mint, we need to transfer the underlying lsd asset to the contract
     // Any sender can call this function as long as they have the sufficient lsd balance
     let lsd_config: T = read_lsd_config(deps.storage)?;
-    let exchange_rate = get_lsd_wrapper_exchange_rate::<I,T>(deps.as_ref(), env.clone())?;
+    let exchange_rate =
+        get_lsd_wrapper_exchange_rate::<I, T>(deps.as_ref(), env.clone(), info.funds.clone())?;
     let mint_amount = lsd_amount * exchange_rate;
 
     let messages = lsd_config.deposit_funds(

@@ -3,9 +3,10 @@ mod tests;
 
 use basset::eris_lp::StateResponse;
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Coin;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, QueryRequest,
-    Response, StdResult, Uint128, WasmMsg, WasmQuery, entry_point
+    entry_point, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    QueryRequest, Response, StdResult, Uint128, WasmMsg, WasmQuery,
 };
 
 use cw20::BalanceResponse;
@@ -37,7 +38,6 @@ pub struct AmphHub {
     pub contracts: Contracts,
 }
 
-
 impl LSDHub<ContractsRaw> for AmphHub {
     fn instantiate_config(deps: Deps, config: ContractsRaw) -> StdResult<Self> {
         Ok(Self {
@@ -54,14 +54,18 @@ impl LSDHub<ContractsRaw> for AmphHub {
         let amp_token_state: StateResponse =
             deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.contracts.hub.to_string(),
-                msg: to_binary(&basset::eris_lp::QueryMsg::State {
-                    addr: None
-                })?,
+                msg: to_binary(&basset::eris_lp::QueryMsg::State { addr: None })?,
             }))?;
         Ok(amp_token_state.exchange_rate)
     }
 
-    fn get_balance(&self, deps: Deps, _env: Env, address: Addr) -> StdResult<Uint128> {
+    fn get_balance(
+        &self,
+        deps: Deps,
+        _env: Env,
+        address: Addr,
+        _funds: Vec<Coin>,
+    ) -> StdResult<Uint128> {
         let balance: BalanceResponse =
             deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.contracts.token.to_string(),
@@ -137,7 +141,5 @@ pub fn execute(
 
 #[cfg_attr(not(feature = "library"), entry_point)]
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    cavern_lsd_wrapper_token_with_limit::contract::query::<ContractsRaw, AmphHub>(
-        deps, env, msg,
-    )
+    cavern_lsd_wrapper_token_with_limit::contract::query::<ContractsRaw, AmphHub>(deps, env, msg)
 }

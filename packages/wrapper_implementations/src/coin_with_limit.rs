@@ -7,18 +7,18 @@ use cosmwasm_std::Coin;
 use std::convert::TryInto;
 
 use basset::wrapper::ExecuteMsg;
+use basset::wrapper::QueryMsg;
 use cavern_lsd_wrapper_token_with_limit::msg::TokenInitMsg;
 use cosmwasm_std::DepsMut;
 use cosmwasm_std::MessageInfo;
 use cosmwasm_std::Response;
 use cosmwasm_std::StdError;
-use basset::wrapper::QueryMsg;
 use cw20_base::ContractError;
 
+use basset::reward::MigrateMsg;
 use cosmwasm_schema::cw_serde;
 use cosmwasm_std::Addr;
 use cosmwasm_std::CosmosMsg;
-use basset::reward::MigrateMsg;
 use cosmwasm_std::Env;
 use cosmwasm_std::QueryRequest;
 use cosmwasm_std::Uint128;
@@ -50,7 +50,6 @@ impl LSDHub<StrideLSDConfigRaw> for StrideLSDConfig {
             denom: config.denom,
             oracle_contract: deps.api.addr_validate(&config.oracle_contract)?,
             underlying_token_denom: config.underlying_token_denom,
-            
         })
     }
 
@@ -71,14 +70,27 @@ impl LSDHub<StrideLSDConfigRaw> for StrideLSDConfig {
             .map_err(|e| StdError::generic_err(e.to_string()))
     }
 
-    fn get_balance(&self, deps: Deps, _env: Env, address: Addr) -> StdResult<Uint128> {
+    fn get_balance(
+        &self,
+        deps: Deps,
+        _env: Env,
+        address: Addr,
+        funds: Vec<Coin>,
+    ) -> StdResult<Uint128> {
         let balance: BalanceResponse =
             deps.querier.query(&QueryRequest::Bank(BankQuery::Balance {
                 address: address.to_string(),
                 denom: self.denom.to_string(),
             }))?;
 
-        Ok(balance.amount.amount)
+        // We need to verify that the sent funds don't contaminate the queried balance
+        let denom_balance = funds
+            .iter()
+            .find(|c| c.denom.eq(&self.denom))
+            .map(|c| c.amount)
+            .unwrap_or(Uint128::zero());
+
+        Ok(balance.amount.amount - denom_balance)
     }
 
     fn deposit_funds(
@@ -144,7 +156,9 @@ pub fn execute(
 }
 
 pub fn query(deps: Deps, env: Env, msg: QueryMsg) -> StdResult<Binary> {
-    cavern_lsd_wrapper_token_with_limit::contract::query::<StrideLSDConfigRaw, StrideLSDConfig>(deps, env, msg)
+    cavern_lsd_wrapper_token_with_limit::contract::query::<StrideLSDConfigRaw, StrideLSDConfig>(
+        deps, env, msg,
+    )
 }
 
 pub fn migrate(deps: DepsMut, env: Env, msg: MigrateMsg) -> StdResult<Response> {

@@ -2,9 +2,10 @@
 mod tests;
 
 use cosmwasm_schema::cw_serde;
+use cosmwasm_std::Coin;
 use cosmwasm_std::{
-    to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo, QueryRequest,
-    Response, StdResult, Uint128, WasmMsg, WasmQuery, entry_point
+    entry_point, to_binary, Addr, Binary, CosmosMsg, Decimal, Deps, DepsMut, Env, MessageInfo,
+    QueryRequest, Response, StdResult, Uint128, WasmMsg, WasmQuery,
 };
 
 use cw20::BalanceResponse;
@@ -15,7 +16,7 @@ use cw20_base::ContractError;
 use basset::external::CTokenStateResponse;
 use basset::external::SpectrumQueryMsg;
 use basset::external::UserInfoResponse;
-use basset::wrapper::{ExecuteMsg,QueryMsg};
+use basset::wrapper::{ExecuteMsg, QueryMsg};
 
 use cavern_lsd_wrapper_token_with_limit::msg::TokenInitMsg;
 use cavern_lsd_wrapper_token_with_limit::trait_def::LSDHub;
@@ -81,7 +82,13 @@ impl LSDHub<ContractsRaw> for SpectrumHub {
         Ok(Decimal::from_ratio(total_bond_amount, total_bond_share))
     }
 
-    fn get_balance(&self, deps: Deps, _env: Env, address: Addr) -> StdResult<Uint128> {
+    fn get_balance(
+        &self,
+        deps: Deps,
+        _env: Env,
+        address: Addr,
+        _funds: Vec<Coin>,
+    ) -> StdResult<Uint128> {
         let balance: BalanceResponse =
             deps.querier.query(&QueryRequest::Wasm(WasmQuery::Smart {
                 contract_addr: self.contracts.token.to_string(),

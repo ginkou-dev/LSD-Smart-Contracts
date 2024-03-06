@@ -1,39 +1,49 @@
-use crate::querier::{get_current_exchange_rate, get_expected_exchange_rate, get_lsd_wrapper_decompound_rate, get_lsd_wrapper_exchange_rate};
+use crate::querier::{
+    get_current_exchange_rate, get_expected_exchange_rate, get_lsd_wrapper_decompound_rate,
+    get_lsd_wrapper_exchange_rate,
+};
 use crate::state::read_lsd_config;
+use crate::state::read_lsd_decompound_rate;
 use crate::state::HUB_CONTRACT_KEY;
 use crate::state::{DecompoundConfig, DecompoundState, DECOMPOUND_CONFIG, DECOMPOUND_STATE};
-use basset::wrapper::{AccruedRewardsLimited, TokenInfoResponseWithLimit, MintAmountReponseWithLimit, GetExpectedExchangeRateResponse};
-use cw20_base::enumerable::{query_all_accounts, query_owner_allowances, query_spender_allowances};
-use serde::Serialize;
-use crate::state::{ read_lsd_decompound_rate};
 use crate::trait_def::LSDHub;
 use basset::reward::MigrateMsg;
+use basset::wrapper::{
+    AccruedRewardsLimited, GetExpectedExchangeRateResponse, MintAmountReponseWithLimit,
+    TokenInfoResponseWithLimit,
+};
+use cw20_base::enumerable::{query_all_accounts, query_owner_allowances, query_spender_allowances};
+use serde::Serialize;
 
-use cw20_base::contract::{query_balance, query_download_logo, query_marketing_info, query_minter, query_token_info};
+use cw20_base::contract::{
+    query_balance, query_download_logo, query_marketing_info, query_minter, query_token_info,
+};
 use serde::Deserialize;
 
 use crate::state::WrapperState;
 
+use crate::querier::query_mint_amount;
 use crate::state::store_hub_contract;
 use crate::state::store_lsd_config;
 use basset::wrapper::ExecuteMsg;
-use cosmwasm_std::{entry_point, to_binary, attr};
-use crate::querier::query_mint_amount;
 use cosmwasm_std::Decimal;
 use cosmwasm_std::Uint128;
+use cosmwasm_std::{attr, entry_point, to_binary};
 
 use cosmwasm_std::{Binary, Deps, DepsMut, Env, MessageInfo, Response, StdError, StdResult};
 
-use cw20_base::allowances::{execute_decrease_allowance, execute_increase_allowance, query_allowance};
+use crate::handler::*;
+use crate::msg::TokenInitMsg;
+use basset::wrapper::QueryMsg;
+use cw20::MinterResponse;
+use cw20_base::allowances::{
+    execute_decrease_allowance, execute_increase_allowance, query_allowance,
+};
 use cw20_base::contract::query as cw20_query;
 use cw20_base::contract::{
     execute_update_marketing, execute_update_minter, execute_upload_logo, instantiate as cw20_init,
 };
 use cw20_base::msg::InstantiateMsg;
-use basset::wrapper::QueryMsg;
-use crate::handler::*;
-use crate::msg::TokenInitMsg;
-use cw20::MinterResponse;
 use cw20_base::ContractError;
 
 pub const SECONDS_PER_YEAR: u64 = 365 * 24 * 60 * 60;
@@ -177,19 +187,23 @@ pub fn query<
                 total_supply: token_info.total_supply,
                 exchange_rate: get_current_exchange_rate::<I, T>(deps, env.clone(), &mut state)
                     .map_err(|err| StdError::generic_err(err.to_string()))?,
-                expected_exchange_rate: get_expected_exchange_rate::<I, T>(deps, env.clone(), &mut state)
+                expected_exchange_rate: get_expected_exchange_rate::<I, T>(
+                    deps,
+                    env.clone(),
+                    &mut state,
+                )
+                .map_err(|err| StdError::generic_err(err.to_string()))?,
+                max_decompound_ratio: decompound_rate.max_decompound_ratio,
+                lsd_exchange_rate: get_lsd_wrapper_exchange_rate::<I, T>(deps, env.clone(), vec![])
                     .map_err(|err| StdError::generic_err(err.to_string()))?,
-                    max_decompound_ratio: decompound_rate.max_decompound_ratio,
-                    lsd_exchange_rate: get_lsd_wrapper_exchange_rate::<I, T>(deps, env.clone()).map_err(|err| StdError::generic_err(err.to_string()))?,
-              //  max_decompound_ratio: get_lsd_wrapper_decompound_rate(deps, env)
-               //     .map_err(|err| StdError::generic_err(err.to_string()))?,
-            })
-        },
-        QueryMsg::GetMintAmount { amount } => {
-            to_binary(&MintAmountReponseWithLimit {
-                mint_amount: query_mint_amount::<I, T>(deps, env.clone(),amount).map_err(|err| StdError::generic_err(err.to_string()))?,
+                //  max_decompound_ratio: get_lsd_wrapper_decompound_rate(deps, env)
+                //     .map_err(|err| StdError::generic_err(err.to_string()))?,
             })
         }
+        QueryMsg::GetMintAmount { amount } => to_binary(&MintAmountReponseWithLimit {
+            mint_amount: query_mint_amount::<I, T>(deps, env.clone(), amount)
+                .map_err(|err| StdError::generic_err(err.to_string()))?,
+        }),
         QueryMsg::Balance { address } => to_binary(&query_balance(deps, address)?),
         QueryMsg::TokenInfo {} => to_binary(&query_token_info(deps)?),
         QueryMsg::Minter {} => to_binary(&query_minter(deps)?),
@@ -216,13 +230,17 @@ pub fn query<
         }
         QueryMsg::MarketingInfo {} => to_binary(&query_marketing_info(deps)?),
         QueryMsg::DownloadLogo {} => to_binary(&query_download_logo(deps)?),
-        QueryMsg::GetExpectedExchangeRate { } => {
+        QueryMsg::GetExpectedExchangeRate {} => {
             let mut state = WrapperState::default();
             to_binary(&GetExpectedExchangeRateResponse {
-                expected_exchange_rate: get_expected_exchange_rate::<I, T>(deps, env.clone(), &mut state)
-                .map_err(|err| StdError::generic_err(err.to_string()))?,            
+                expected_exchange_rate: get_expected_exchange_rate::<I, T>(
+                    deps,
+                    env.clone(),
+                    &mut state,
+                )
+                .map_err(|err| StdError::generic_err(err.to_string()))?,
             })
-        },
+        }
     }
 }
 
@@ -262,13 +280,10 @@ fn compute_accrued_rewards<
         let decompound_state = DECOMPOUND_STATE.load(deps.storage)?;
         // SUM(ratio) / total_period < config.max_decompound_ratio / SECONDS_PER_YEAR
         // --> new_rate < config.max_decompound_ratio * total_period / SECONDS_PER_YEAR - Sum(old_rates)
-        let total_period = decompound_state.total_seconds
-            + env
-                .block
-                .time
-                .seconds() - decompound_state.last_decompound.seconds();
+        let total_period = decompound_state.total_seconds + env.block.time.seconds()
+            - decompound_state.last_decompound.seconds();
 
-        println!("total_period : {}",total_period);
+        println!("total_period : {}", total_period);
 
         // If we decompounded too much in the past, this will simply error
         // As soon as the ratio goes back to normal, this will stop erroring
@@ -280,7 +295,7 @@ fn compute_accrued_rewards<
                 ))
             })?;
 
-        println!("max_rate : {}",max_rate);
+        println!("max_rate : {}", max_rate);
         luna_rewards = luna_rewards.min(max_rate * state.backing_luna * Uint128::one());
         rewards_to_decompound = rewards_to_decompound.min(max_rate * state.lsd_balance);
     }
@@ -359,8 +374,8 @@ pub fn execute_decompound<
                 }
                 let new_decompound = DecompoundState {
                     ratio_sum: old_decompound.ratio_sum + rewards.rate_decrease,
-                    total_seconds: old_decompound.total_seconds
-                        + env.block.time.seconds() - old_decompound.last_decompound.seconds(),
+                    total_seconds: old_decompound.total_seconds + env.block.time.seconds()
+                        - old_decompound.last_decompound.seconds(),
                     last_decompound: env.block.time,
                 };
 
@@ -389,24 +404,19 @@ pub fn execute_decompound<
 }
 
 pub fn update_decompound_rate(
-deps: DepsMut,
-env: Env,
-info: MessageInfo,
-decompound_rate: Option<Decimal>,
+    deps: DepsMut,
+    env: Env,
+    info: MessageInfo,
+    decompound_rate: Option<Decimal>,
 ) -> Result<Response, ContractError> {
-
-
-        DECOMPOUND_CONFIG.save(
-            deps.storage,
-            &DecompoundConfig {
-                max_decompound_ratio: decompound_rate,
-            },
-        )?;
-        let res = Response::new()
-            .add_attributes(vec![
-                attr("action", "update_decompound_rate")
-            ]);
-        Ok(res)
+    DECOMPOUND_CONFIG.save(
+        deps.storage,
+        &DecompoundConfig {
+            max_decompound_ratio: decompound_rate,
+        },
+    )?;
+    let res = Response::new().add_attributes(vec![attr("action", "update_decompound_rate")]);
+    Ok(res)
 }
 
 #[cfg_attr(not(feature = "library"), entry_point)]
@@ -420,14 +430,12 @@ pub fn migrate(deps: DepsMut, _env: Env, msg: MigrateMsg) -> StdResult<Response>
             max_decompound_ratio: msg.max_decompound_ratio,
         },
     )?;
-/*
-    DECOMPOUND_STATE.save(
-        deps.storage,
-        &DecompoundState { ratio_sum: Decimal::zero(), total_seconds: 0, last_decompound: env.block.time })?;
+    /*
+        DECOMPOUND_STATE.save(
+            deps.storage,
+            &DecompoundState { ratio_sum: Decimal::zero(), total_seconds: 0, last_decompound: env.block.time })?;
 
-*/
-    
+    */
+
     Ok(Response::default())
 }
-
-
